@@ -1,11 +1,23 @@
-from flask import Flask, render_template, request, redirect, session, flash
-from pessoa import Pessoa
+from flask import Flask, render_template, request, redirect, session, flash, url_for
+from models.pessoa import Pessoa
+from models.usuario import Usuario
 
 pessoa1 = Pessoa('Marcio', '28', '1,82')
 pessoa2 = Pessoa('Joao', '22', '1,72')
 pessoa3 = Pessoa('Adriano', '30', '1,80')
 
 lista = [pessoa1, pessoa2, pessoa3]
+
+usuario1 = Usuario('marcio','lourenco','031060')
+usuario2 = Usuario('joao','casali','123456')
+usuario3 = Usuario('larissa','sebold','654321')
+
+usuarios = { 
+    usuario1.nickname: usuario1,
+    usuario2.nickname: usuario2,
+    usuario3.nickname: usuario3
+}
+
 app = Flask(__name__)
 app.secret_key = 'today'
 
@@ -16,9 +28,9 @@ def inicio():
 @app.route('/casdastrar')
 def novo():
     if 'usuario_logado' not in session or session['usuario_logado'] == None:
-        return redirect('/login')
+        return redirect(url_for('login', proximo = url_for('cadastrar')))
 
-    return render_template('novo.html', titulo = 'Cadastro Pessoa')
+    return render_template('cadastro.html', titulo = 'Cadastro Pessoa')
 
 @app.route('/criar', methods = ['POST'])
 def criar():
@@ -30,28 +42,33 @@ def criar():
 
     lista.append(abacate)
 
-    return redirect('/')
+    return redirect(url_for('inicio'))
 
 @app.route('/')
 def login():
-    return render_template('login.html', titulo = "Login")
+    proximo = request.args.get('proximo')
+    return render_template('login.html', titulo = 'Login Usuario', proximo = proximo)
 
 @app.route('/autenticar', methods = ['POST'])
 def autenticar():
-    if 'today' == request.form['senha']:
+    if request.form['usuario'] in usuarios:
 
-        session['usuario_logado'] = request.form['usuario']
+        usuario = usuarios[request.form['usuario']]
 
-        flash(session['usuario_logado'] + ' Você está logado')
-        return redirect('/listar')
+        if request.form['senha'] == usuario.senha:
+            session['usuario_logado'] = usuario.nickname
+
+            flash(usuario.nickname + ' Usuario Logado')
+            proxima_pagina = request.form['proximo']
+            return redirect(proxima_pagina)
     else:
-        flash('Senha Invalida')
-        return redirect('/login')
+        flash('Usuario ou senha invalidos')
+        return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
-    session['usuario_logado'] == None
+    session['usuario_logado'] = None
     flash('VOCE FOi DESCONECTADO')
-    return redirect('/')
+    return redirect(url_for('login'))
 
 app.run(debug=True)
