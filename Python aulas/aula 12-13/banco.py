@@ -5,7 +5,7 @@ try:
     port = '5433',
     database = 'postgres',
     user = 'marcio',
-    password = '031060@Ma')
+    password = '031060')
     print('Você está conectado...')
 
 except Exception:
